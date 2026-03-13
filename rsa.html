@@ -1,0 +1,314 @@
+<!DOCTYPE html>
+<html>
+<head>
+<title>RSA Cryptography</title>
+
+<style>
+
+body{
+font-family:Arial;
+background:linear-gradient(135deg,#ff9a9e,#fad0c4,#fbc2eb,#a6c1ee);
+background-size:400% 400%;
+animation:bgmove 8s infinite alternate;
+height:100vh;
+display:flex;
+justify-content:center;
+align-items:center;
+}
+
+@keyframes bgmove{
+0%{background-position:left;}
+100%{background-position:right;}
+}
+
+.container{
+background:rgba(255,255,255,0.25);
+backdrop-filter:blur(10px);
+padding:30px;
+border-radius:20px;
+width:400px;
+text-align:center;
+box-shadow:0 10px 30px rgba(0,0,0,0.3);
+color:white;
+}
+
+input{
+width:92%;
+padding:9px;
+margin:6px;
+border-radius:8px;
+border:none;
+outline:none;
+}
+
+button{
+background:#ff7eb3;
+color:white;
+border:none;
+padding:10px 18px;
+margin:6px;
+border-radius:8px;
+cursor:pointer;
+font-weight:bold;
+}
+
+button:hover{
+background:#ff4f91;
+}
+
+.section{
+background:rgba(255,255,255,0.15);
+padding:12px;
+margin-top:12px;
+border-radius:12px;
+}
+
+#steps{
+font-size:13px;
+text-align:left;
+background:rgba(0,0,0,0.2);
+padding:10px;
+border-radius:10px;
+margin-top:10px;
+}
+
+.student{
+margin-bottom:10px;
+font-size:14px;
+}
+
+</style>
+
+<script>
+
+function isPrime(num){
+num=Number(num);
+if(num<=1) return false;
+
+for(let i=2;i<=Math.sqrt(num);i++){
+if(num%i==0) return false;
+}
+return true;
+}
+
+function randomPrime(){
+
+let num;
+
+while(true){
+num=Math.floor(Math.random()*50)+10;
+if(isPrime(num)) return num;
+}
+
+}
+
+function generateRandomPrimes(){
+
+let p=randomPrime();
+let q=randomPrime();
+
+while(p==q){
+q=randomPrime();
+}
+
+document.getElementById("p").value=p;
+document.getElementById("q").value=q;
+
+}
+
+function gcd(a,b){
+while(b!=0n){
+let t=b;
+b=a%b;
+a=t;
+}
+return a;
+}
+
+function modInverse(e,phi){
+for(let d=1n; d<phi; d++){
+if((e*d)%phi==1n) return d;
+}
+}
+
+function modPow(base,exp,mod){
+
+let result=1n;
+base=base%mod;
+
+while(exp>0n){
+
+if(exp%2n==1n)
+result=(result*base)%mod;
+
+exp=exp/2n;
+base=(base*base)%mod;
+
+}
+
+return result;
+
+}
+
+function generateKey(){
+
+let p=document.getElementById("p").value;
+let q=document.getElementById("q").value;
+
+if(p=="" || q==""){
+alert("Enter P and Q");
+return;
+}
+
+if(!isPrime(p) || !isPrime(q)){
+alert("P and Q must be prime numbers");
+return;
+}
+
+if(p==q){
+alert("P and Q must be different");
+return;
+}
+
+p=BigInt(p);
+q=BigInt(q);
+
+let n=p*q;
+let phi=(p-1n)*(q-1n);
+
+let e=2n;
+
+while(e<phi){
+if(gcd(e,phi)==1n) break;
+e++;
+}
+
+let d=modInverse(e,phi);
+
+document.getElementById("n").value=n;
+document.getElementById("e").value=e;
+document.getElementById("d").value=d;
+
+document.getElementById("steps").innerHTML=
+"Step 1: n = p × q = "+n+"<br>"+
+"Step 2: φ(n) = (p-1)(q-1) = "+phi+"<br>"+
+"Step 3: Choose e such that gcd(e,φ)=1 → e = "+e+"<br>"+
+"Step 4: Calculate d → d = "+d;
+
+}
+
+function encrypt(){
+
+let msg=document.getElementById("msg").value;
+
+if(msg==""){
+alert("Enter message");
+return;
+}
+
+let m=BigInt(msg);
+
+let e=BigInt(document.getElementById("e").value);
+let n=BigInt(document.getElementById("n").value);
+
+if(m>=n){
+alert("Message must be smaller than n");
+return;
+}
+
+let c=modPow(m,e,n);
+
+document.getElementById("cipher").value=c;
+
+document.getElementById("steps").innerHTML+="<br><br>"+
+"Encryption: C = M^e mod n<br>"+
+"C = "+m+"^"+e+" mod "+n+" = "+c;
+
+}
+
+function decrypt(){
+
+let cipher=document.getElementById("cipher").value;
+
+if(cipher==""){
+alert("No cipher text");
+return;
+}
+
+let c=BigInt(cipher);
+let d=BigInt(document.getElementById("d").value);
+let n=BigInt(document.getElementById("n").value);
+
+let m=modPow(c,d,n);
+
+document.getElementById("plain").value=m;
+
+document.getElementById("steps").innerHTML+="<br><br>"+
+"Decryption: M = C^d mod n<br>"+
+"M = "+c+"^"+d+" mod "+n+" = "+m;
+
+}
+
+</script>
+</head>
+
+<body>
+
+<div class="container">
+
+<h2>🔐 RSA Cryptography</h2>
+
+<div class="student">
+<b>Name :</b> D. Niruba<br>
+<b>Roll No :</b> 23UIT090
+</div>
+
+<div class="section">
+
+P<br>
+<input type="number" id="p">
+
+Q<br>
+<input type="number" id="q">
+
+<br>
+
+<button onclick="generateRandomPrimes()">Auto Generate Primes</button>
+<button onclick="generateKey()">Generate Key</button>
+
+<br>
+
+n<br>
+<input id="n" readonly>
+
+e (Public Key)<br>
+<input id="e" readonly>
+
+d (Private Key)<br>
+<input id="d" readonly>
+
+</div>
+
+<div class="section">
+
+Message<br>
+<input id="msg">
+
+<button onclick="encrypt()">Encrypt</button>
+
+Cipher Text<br>
+<input id="cipher">
+
+<button onclick="decrypt()">Decrypt</button>
+
+Plain Text<br>
+<input id="plain">
+
+</div>
+
+<div id="steps"></div>
+
+</div>
+
+</body>
+</html>
